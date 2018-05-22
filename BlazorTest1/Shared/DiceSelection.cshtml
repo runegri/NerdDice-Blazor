@@ -1,0 +1,81 @@
+﻿@using BlazorTest1
+@using no.Rag.DiceParser;
+@inject IAvailableDiceRolls DiceRolls
+@inject Microsoft.AspNetCore.Blazor.Services.IUriHelper UriHelper
+
+<div class="container-fluid top-container">
+    <div class="row">
+        @foreach (var roll in StandardRolls)
+        {
+            <div class="col-sm">
+                <a href="/diceroll/@roll" class="btn btn-primary">@roll</a>
+            </div>
+        }
+
+    </div>
+    <div class="row">
+        @foreach (var roll in FavoriteRolls)
+        {
+            <div class="col-sm">
+                <a href="/diceroll/@roll" class="btn btn-primary">@roll</a>
+            </div>
+        }
+        <div class="col-sm">
+            <input type="text" id="addDice" bind="NewDice" />
+
+            <a href="#" class="btn btn-primary" onclick="@AddFav">Add dice</a>
+
+            <a href="#" class="btn btn-primary" onclick="@ClearFav">Clear favs</a>
+        </div>
+    </div>
+</div>
+
+@functions {
+    List<string> StandardRolls = new List<string>();
+    List<string> FavoriteRolls = new List<string>();
+    string NewDice { get; set; } = "2d6";
+
+    protected override async Task OnInitAsync()
+    {
+        StandardRolls.AddRange(await DiceRolls.GetStandardRolls());
+        FavoriteRolls.AddRange(await DiceRolls.GetFavoriteRolls());
+
+        StateHasChanged();
+    }
+
+    async Task AddFavorite(string roll)
+    {
+        await DiceRolls.AddFavoriteRoll(roll);
+        FavoriteRolls = await DiceRolls.GetFavoriteRolls();
+        StateHasChanged();
+    }
+
+    void AddFav()
+    {
+        try
+        {
+            new DiceParser().Parse(NewDice);
+            AddFavorite(NewDice).Wait();
+            UriHelper.NavigateTo("/diceroll/" + NewDice);
+        }
+        catch (DiceParserException)
+        { }
+    }
+
+    async Task ClearFavorites()
+    {
+        foreach (var favorite in FavoriteRolls)
+        {
+            await DiceRolls.RemoveFavoriteRoll(favorite);
+        }
+        FavoriteRolls.Clear();
+        StateHasChanged();
+    }
+
+    void ClearFav()
+    {
+        ClearFavorites().Wait();
+    }
+
+
+}

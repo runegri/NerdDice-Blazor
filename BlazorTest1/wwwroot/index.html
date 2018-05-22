@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width">
+    <title>Nerd Dice</title>
+    <base href="/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/site.css" rel="stylesheet" />
+</head>
+<body>
+    <app>Loading...</app>
+
+    <script type="blazor-boot">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+
+    <script>
+        var chart;
+        function drawChart(chartData) {
+            if (chart) {
+                chart.destroy();
+            }
+            chart = new Chart('chart', {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels, 
+                    datasets: [{
+                        label: chartData.caption,
+                        data: chartData.values, 
+                    }]
+                },
+                options: {
+                    tooltips: {
+                        enabled: false
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script type="text/javascript">
+        Blazor.registerFunction('localStorage.getItem', function (key) {
+            return window.localStorage.getItem(key);
+        });
+
+        Blazor.registerFunction('localStorage.setItem', function (key, value) {
+            return window.localStorage.setItem(key, value);
+        });
+
+        Blazor.registerFunction('drawChart', function (chartData) {
+            window.setTimeout(function () { drawChart(chartData); }, 250);
+        });
+    </script>
+</body>
+</html>

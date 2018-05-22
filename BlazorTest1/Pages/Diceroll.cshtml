@@ -1,0 +1,88 @@
+﻿@using no.Rag.DiceParser
+@using no.rag.NerdDice.Services
+@page "/diceroll/{dice}"
+
+<div class="container-fluid top-container">
+    <div class="row">
+        <div class="col">
+            <h1>Roll: @Dice</h1>
+            <br />
+            <a href="#" class="btn btn-primary" onclick="@RollDice">Roll again</a>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Dice</th>
+                        <th scope="col">Result</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                @foreach (var roll in Rolls)
+                {
+                    <tr>
+                        <td>@roll.Time</td>
+                        <td>@roll.Dice</td>
+                        <td>@roll.Result</td>
+                    </tr>
+                }
+            </table>
+        </div>
+        <div class="col">
+            <figure class="figure">
+                <canvas id="chart" class="figure-img img-fluid rounded" style="width:100%; height:auto;" width="600" height="400"></canvas>
+                <figcaption class="figure-caption">Dice chart</figcaption>
+            </figure>
+        </div>
+    </div>
+</div>
+
+@functions {
+[Parameter]
+private string Dice { get; set; }
+private string OldDice { get; set; }
+
+List<Roll> Rolls = new List<Roll>();
+DiceSetup Setup;
+
+protected override void OnParametersSet()
+{
+    if (Dice != OldDice)
+    {
+        Setup = new DiceParser().Parse(Dice);
+        OldDice = Dice;
+        RollDice();
+        Chart.UpdateChart(SimulateDiceRolls());
+    }
+}
+
+void RollDice()
+{
+    var roll = new Roll
+    {
+        Time = DateTime.Now.ToLongTimeString(),
+        Dice = Dice,
+        Result = Setup.Roll().ToString()
+    };
+    Rolls.Insert(0, roll);
+}
+
+class Roll
+{
+    public string Time { get; set; }
+    public string Dice { get; set; }
+    public string Result { get; set; }
+}
+
+ChartData SimulateDiceRolls()
+{
+    var rolls = Enumerable.Range(0, 2000).Select(r => Setup.Roll().Value).GroupBy(r => r).OrderBy(g => g.Key).ToList();
+
+    return new ChartData
+    {
+        labels = rolls.Select(g => g.Key.ToString()).ToArray(),
+        values = rolls.Select(g => g.Count().ToString()).ToArray(),
+        caption = "Distribution of 2000 simulated " + Setup.ToString() + " rolls"
+    };
+}
+}
+
